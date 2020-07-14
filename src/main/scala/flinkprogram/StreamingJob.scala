@@ -305,7 +305,6 @@ object StreamingJob {
         var ok = false
         if(ctx.getEventsForPattern("a").nonEmpty) {
           ok = ctx.getEventsForPattern("a").last.volume > ev.volume
-          //ok = ok && ctx.getEventsForPattern("a").last.price < ev.price
         }else{
           ok = ev.price < 500
         }
