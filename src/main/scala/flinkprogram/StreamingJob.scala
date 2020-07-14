@@ -175,7 +175,7 @@ object StreamingJob {
     matchesQ2.print()
 
     val cnts2: DataStream[Int] = matchesQ2
-      .map(element => 1).timeWindowAll(Time.seconds(1000)).sum(0)
+      .map(element => 1).timeWindowAll(Time.seconds(100)).sum(0)
 
     cnts2.print()
 
@@ -199,7 +199,7 @@ object StreamingJob {
     matchesQ3.print()
 
     val cnts3: DataStream[Int] = matchesQ3
-      .map(element => 1).timeWindowAll(Time.seconds(10000)).sum(0)
+      .map(element => 1).timeWindowAll(Time.seconds(100)).sum(0)
     cnts3.print()
 
   // QUERY 4
@@ -269,7 +269,7 @@ object StreamingJob {
     matchesQ4.print()
 
     val cnts4: DataStream[Int] = matchesQ4
-      .map(element => 1).timeWindowAll(Time.seconds(10000)).sum(0)
+      .map(element => 1).timeWindowAll(Time.seconds(100)).sum(0)
 
     cnts4.print()
 
@@ -297,7 +297,7 @@ object StreamingJob {
     matchesQ5.print()
 
     val cnts5: DataStream[Int] = matchesQ5
-      .map(element => 1).timeWindowAll(Time.seconds(10000)).sum(0)
+      .map(element => 1).timeWindowAll(Time.seconds(100)).sum(0)
 
     cnts5.print()
 
