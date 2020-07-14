@@ -59,10 +59,7 @@ object StreamingJob {
     val text_tw = env.readTextFile(System.getProperty("user.dir")+"/eventStream_tw.txt")
     val text_q3 = env.readTextFile(System.getProperty("user.dir")+"/eventStream_query.txt")
 
-
-
     // Convert file content to StockEvents
-
     val events = text.flatMap { str => str.split("\n") } //split to lines
       .map(str => str.replaceAll("\t", ",").replaceAll("[^0-9,]", "")) //extract numbers separated by commas
       .map(str => str.split(",")) //convert each line to string array (each string is a number)
@@ -70,7 +67,7 @@ object StreamingJob {
 
 
     // JUST FOR DEBUG!
-    // events.map(e => e.toString).print() //print events to screen
+    // events.map(e => e.toString).print() //print events to stdout
 
     val events_tw = text_tw.flatMap { str => str.split("\n") } //split to lines
       .map(str => str.replaceAll("\t", ",").replaceAll("[^0-9,]", "")) //extract numbers separated by commas
@@ -129,9 +126,7 @@ object StreamingJob {
     // Define After Match Skip Strategy
     val skipStrategy= AfterMatchSkipStrategy.noSkip()
 
-
     // QUERY 1
-
     val query1_pc = Pattern.begin[StockEvent]("a",skipStrategy)
       .where(_.price % 500 == 0)
       .next("b") // query 1 with partition-contiguity ESS
@@ -152,23 +147,18 @@ object StreamingJob {
 
     val query1 = query1_stam
 
-    partBySym.print()
-
     val patternStreamQ1 = CEP.pattern(partBySym, query1)
 
     val matchesQ1:DataStream[(StockEvent,StockEvent)] = patternStreamQ1.select(event => simpleSelect2(event))
 
     matchesQ1.print()
 
-
     val cnts: DataStream[Int] = matchesQ1
-      .map(element => 1).timeWindowAll(Time.seconds(1000)).sum(0)
+      .map(element => 1).timeWindowAll(Time.seconds(100)).sum(0)
 
      cnts.print()
 
-
   // QUERY 2
-
     val T=100000
     val query2_stam = Pattern.begin[StockEvent]("a",skipStrategy)
       .where(_.symbol==1)
@@ -178,24 +168,18 @@ object StreamingJob {
       .where(_.symbol==3)
       .within(Time.milliseconds(T))
 
-    partByPr_tw.print()
-
-
     val patternStreamQ2 = CEP.pattern(partByPr_tw, query2_stam)
 
     val matchesQ2: DataStream[(StockEvent, StockEvent, StockEvent)] = patternStreamQ2.select(event => simpleSelect3(event))
 
     matchesQ2.print()
 
-
     val cnts2: DataStream[Int] = matchesQ2
       .map(element => 1).timeWindowAll(Time.seconds(1000)).sum(0)
 
     cnts2.print()
 
-
   // QUERY 3
-
     val query3_pc = Pattern.begin[StockEvent]("a",skipStrategy)
       .next("b")
       .where( (ev,ctx) => ev.volume > ctx.getEventsForPattern("a").head.volume)
@@ -208,20 +192,15 @@ object StreamingJob {
 
     val query3 = query3_stnm
 
-    partByPr_q3.print()
-
-
     val patternStreamQ3 = CEP.pattern(partByPr_q3, query3)
 
     val matchesQ3: DataStream[(StockEvent, StockEvent)] = patternStreamQ3.select( event => simpleSelect2(event))
 
     matchesQ3.print()
 
-
     val cnts3: DataStream[Int] = matchesQ3
       .map(element => 1).timeWindowAll(Time.seconds(10000)).sum(0)
     cnts3.print()
-
 
   // QUERY 4
     // best strategy for query 4 is skipToNext() !!!
@@ -281,8 +260,6 @@ object StreamingJob {
       .where(e => e.volume < 150 && e.price > 950)
       .within(Time.milliseconds(501))
 
-    partBySym.print()
-
     val query4 = query4_agg
 
     val patternStreamQ4 = CEP.pattern(partBySym, query4)
@@ -290,7 +267,6 @@ object StreamingJob {
     val matchesQ4: DataStream[(Iterable[StockEvent], StockEvent)] = patternStreamQ4.select( event => complexSelect(event))
 
     matchesQ4.print()
-
 
     val cnts4: DataStream[Int] = matchesQ4
       .map(element => 1).timeWindowAll(Time.seconds(10000)).sum(0)
@@ -314,22 +290,19 @@ object StreamingJob {
       .where(ev => ev.volume > 150)
       .within(Time.milliseconds(2000))
 
-    partBySym_q3.print()
-
     val patternStreamQAdd = CEP.pattern(partBySym_q3, query_add)
 
     val matchesQ5: DataStream[(Iterable[StockEvent], StockEvent)] = patternStreamQAdd.select( event => complexSelect(event))
 
     matchesQ5.print()
 
-
     val cnts5: DataStream[Int] = matchesQ5
       .map(element => 1).timeWindowAll(Time.seconds(10000)).sum(0)
 
     cnts5.print()
 
-    //println(env.getExecutionPlan)
-    val result = env.execute("First Steps with Flink!")
+    //println(env.getExecutionPlan)  //json for visualizing the execution plan
+    val result = env.execute("CEP with Flink")
     println("The job took " + result.getNetRuntime(TimeUnit.MILLISECONDS) + " to execute");
 
   }
